@@ -1,35 +1,32 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
-
-LOCAL_USER = ENV['USER']
-USER_SERVER = ENV['USER'] + "S"
-USER_SERVERW = ENV['USER'] + "SW"
-print "server is : #{USER_SERVER}\n"
-print "server worker is : #{USER_SERVERW}\n"
-
 Vagrant.configure("2") do |config|
-    config.vm.box = "generic/debian12"
+  # Specify the base box (OS image)
+  config.vm.box = "generic/alpine312"
 
-    config.vm.define "#{USER_SERVER}" do |server|
-        server.vm.hostname = "#{USER_SERVER}"
-        server.vm.network "private_network", ip: "192.168.56.110"
-        server.vm.provider "virtualbox" do |vb|
-            vb.name = "#{USER_SERVER}"
-            # vb.gui = true
-            vb.memory = "1024"
-            vb.cpus = "1"
-        end
-        server.vm.provision "shell", path: "scripts/server.sh"
+  config.vm.define "rabouziaS" do |control|
+    control.vm.hostname = "rabouziaS"
+    control.vm.network "private_network", ip: "192.168.56.110"
+    control.vm.provider "virtualbox" do |v|
+        v.customize ["modifyvm", :id, "--name", "rabouziaS"]
+        v.memory = 1024
+        v.cpu = 1
     end
-    config.vm.define "wilSW" do |worker|
-        worker.vm.hostname = "wilSW"
-        worker.vm.network "private_network", ip: "192.168.56.111"
-        worker.vm.provider "virtualbox" do |vb|
-            vb.name = "#{USER_SERVERW}"
-            # vb.gui = true
-            vb.memory = "1024"
-            vb.cpus = "1"
-        end
-        worker.vm.provision "shell", path: "scripts/worker.sh"
+    config.vm.provision :shell, :inline => SHELL 
+      ...
+    SHELL
+    control.vm.provision "shell", path: REDACTED
+  end
+
+  config.vm.define "rabouziaSW" do |control|
+    control.vm.hostname = "rabouziaSW"
+    control.vm.network "private_network", ip: "192.168.56.111"
+    control.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--name", "rabouziaSW"]
+      v.memory = 1024
+      v.cpu = 1
     end
+    config.vm.provision "shell", inline: <<-SHELL
+      ...
+    SHELL
+    control.vm.provision "shell", path: REDACTED
+  end
 end
