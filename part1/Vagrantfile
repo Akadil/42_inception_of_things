@@ -1,30 +1,37 @@
+MASTER_NODE_IP="192.168.56.110"
+WORKER_NODE_IP="192.168.56.111"
+MASTER_USER="rabouziaS"
+WORKER_USER="rabouziaSW"
+
 Vagrant.configure("2") do |config|
   # Specify the base box (OS image)
-  config.vm.box = "generic/alpine312"
+  config.vm.box = "ubuntu/focal64"
 
-  config.vm.define "rabouziaS" do |control|
-    control.vm.hostname = "rabouziaS"
-    control.vm.network "private_network", ip: "192.168.56.110"
+  config.vm.define "#{MASTER_USER}" do |control|
+    control.vm.hostname = "#{MASTER_USER}"
+    control.vm.network "private_network", ip: "#{MASTER_NODE_IP}"
     control.vm.provider "virtualbox" do |v|
         v.memory = "1024"
         v.cpus = "1"
-        v.name = "rabouziaS"
+        v.name = "#{MASTER_USER}"
     end
-    config.vm.provision :shell, inline: <<-SHELL 
+    control.vm.provision :shell, inline: <<-SHELL 
       echo "Hello World from Server"
     SHELL
+    control.vm.provision "shell", path: "scripts/install_k3s_master.sh"
   end
 
-  config.vm.define "rabouziaSW" do |control|
-    control.vm.hostname = "rabouziaSW"
-    control.vm.network "private_network", ip: "192.168.56.111"
+  config.vm.define "#{WORKER_USER}" do |control|
+    control.vm.hostname = "#{WORKER_USER}"
+    control.vm.network "private_network", ip: "#{SERVER_NODE_IP}"
     control.vm.provider "virtualbox" do |v|
       v.memory = "1024"
       v.cpus = "1"
-      v.name = "rabouziaSW"
+      v.name = "#{WORKER_USER}"
     end
-    config.vm.provision "shell", inline: <<-SHELL
+    control.vm.provision "shell", inline: <<-SHELL
       echo "Hello World from Server Worker"
     SHELL
+    control.vm.provision "shell", path: "scripts/install_k3s_worker.sh", args: ["#{MASTER_NODE_IP}"]
   end
 end
