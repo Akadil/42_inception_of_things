@@ -1,17 +1,19 @@
 #!/bin/bash
+set -e
 
-# 1. Install K3s in server mode
+echo "Installing K3s in server mode..."
+
+# Install K3s as server
 curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644
 
-# 2. Pass the server token to worker nodes by storing it shared folder
-# 2.1 Wait for K3s to be ready
+# Wait for node token to be generated
+echo "Waiting for K3s to generate node token..."
 while [ ! -f /var/lib/rancher/k3s/server/node-token ]; do
-  echo "Waiting for node-token..."
   sleep 2
 done
 
-# 2.2 Copy token to synced folder so worker can access it
+# Copy token to shared folder
 cp /var/lib/rancher/k3s/server/node-token /vagrant/node-token
 
-# 3. Finished
-echo "K3s server installed. Token saved to /vagrant/node-token"
+echo "✓ K3s server installed successfully"
+echo "✓ Node token saved to /vagrant/node-token"
