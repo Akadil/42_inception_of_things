@@ -15,7 +15,12 @@ done
 TOKEN=$(cat /vagrant/node-token)
 
 # Install K3s as agent
-curl -sfL https://get.k3s.io | K3S_URL=https://${MASTER_IP}:6443 K3S_TOKEN=${TOKEN} sh -
+curl -sfL https://get.k3s.io | K3S_URL=https://${MASTER_IP}:6443 K3S_TOKEN=${TOKEN} sh -s - agent \
+  --node-ip=192.168.56.111 \
+  --flannel-iface=eth1
+
+# Remove the token for security reasons
+rm /vagrant/node-token
 
 echo "✓ K3s agent installed successfully"
 echo "✓ Joined cluster at ${MASTER_IP}"
