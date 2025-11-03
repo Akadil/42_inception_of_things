@@ -13,11 +13,10 @@ done
 
 # Read the token
 TOKEN=$(cat /vagrant/node-token)
+echo "Here is my token: " ${TOKEN}
 
 # Install K3s as agent
-curl -sfL https://get.k3s.io | K3S_URL=https://${MASTER_IP}:6443 K3S_TOKEN=${TOKEN} sh -s - agent \
-  --node-ip=192.168.56.111 \
-  --flannel-iface=eth1
+curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="--flannel-iface enp0s8" K3S_URL=https://192.168.56.110:6443 K3S_TOKEN=${TOKEN} sh -
 
 # Remove the token for security reasons
 rm /vagrant/node-token
