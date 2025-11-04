@@ -1,0 +1,20 @@
+NODE_IP = "192.168.56.110"
+USER = "rabouziaS"
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/focal64"
+
+  # Master Node (Server)
+  config.vm.define MASTER_USER do |master|
+    master.vm.hostname = MASTER_USER
+    master.vm.network "private_network", ip: MASTER_NODE_IP
+
+    master.vm.provider "virtualbox" do |vb|
+      vb.name = MASTER_USER
+      vb.memory = "2048"
+      vb.cpus = 2
+    end
+    
+    master.vm.provision "shell", path: "scripts/install.sh"
+  end
+end
