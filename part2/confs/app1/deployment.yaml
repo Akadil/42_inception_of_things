@@ -10,7 +10,7 @@ spec:
     matchLabels:
       app: app-one
   template:
-    metada:
+    metadata:
       labels:
         app: app-one
     spec:

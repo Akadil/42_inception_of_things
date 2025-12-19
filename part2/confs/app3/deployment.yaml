@@ -10,7 +10,7 @@ spec:
     matchLabels:
       app: app-three
   template:
-    metada:
+    metadata:
       labels:
         app: app-three
     spec:
