@@ -52,7 +52,7 @@ print_status "Namespace created."
 
 print_status "Installing ArgoCD..."
 
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 print_status "ArgoCD installed. Waiting for pods to be ready..."
 print_warning "This may take a few minutes..."
@@ -65,16 +65,24 @@ print_status "All ArgoCD pods are ready!"
 # ============================================================================
 # Allow HTTP connection
 # ============================================================================
-# print_status "Configuring ArgoCD server access..."
+print_status "Configuring ArgoCD server access..."
 
 # Patch the service to allow insecure access (for local development)
-# kubectl patch deployment argocd-server -n argocd --type='json' \
-#  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/-", "value": "--insecure"}]'
+kubectl patch deployment argocd-server -n argocd --type='json' \
+  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--insecure"},
+	{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--basehref"},
+	{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "/argocd"},
+	{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--rootpath"},
+	{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "/argocd"}]'
 
 # Wait for the patched deployment to roll out
-# kubectl rollout status deployment/argocd-server -n argocd
+kubectl rollout status deployment/argocd-server -n argocd
 
-# print_status "ArgoCD server configured."
+print_status "ArgoCD server configured."
+
+print_status "Setting up the ingress"
+kubectl apply -f "./confs/argocd/ingress.yaml"
+print_status "Ingress created"
 
 # ============================================================================
 # Get ArgoCD Admin Password
