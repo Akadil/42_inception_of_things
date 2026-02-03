@@ -1,15 +1,10 @@
 #!/bin/bash
 set -e
 
-# ============================================================================
-# CONFIGURATION - FILL THESE IN
-# ============================================================================
-GITHUB_REPO="https://github.com/YOUR_USERNAME/iot-YOUR_LOGIN.git"
+GITHUB_REPO="https://github.com/Akadil/iot-akalimol.git"
 MANIFEST_PATH="manifestations"      # Folder in your repo with K8s manifests
-APP_NAME="wil-playground"           # Application name
+APP_NAME="my_application"           # Application name
 NAMESPACE="dev"                     # Namespace to deploy app
-
-# ============================================================================
 
 echo "======================================"
 echo "Part 3: Deploy Application via ArgoCD"
