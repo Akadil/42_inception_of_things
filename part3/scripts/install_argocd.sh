@@ -11,10 +11,11 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
-
 print_status() { echo -e "${GREEN}[+]${NC} $1"; }
 print_error() { echo -e "${RED}[!]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[*]${NC} $1"; }
+
+ARGOCD_HOSTNAME="argocd.local"
 
 # ============================================================================
 # Dependency Check
@@ -27,14 +28,13 @@ if ! command -v kubectl &> /dev/null; then
     print_error "Kubectl is not installed."
     exit 1
 fi
-
 if ! kubectl cluster-info &> /dev/null; then
     print_error "Cannot connect to Kubernetes cluster. Is the cluster running?"
     exit 1
 fi
 
 # ============================================================================
-# Install ArgoCD
+# Creating the namespace
 # ============================================================================
 print_status "Creating argocd namespace..."
 
@@ -48,8 +48,11 @@ if kubectl get namespace argocd &> /dev/null; then
 fi
 
 kubectl create namespace argocd
-print_status "Namespace created."
+print_status "Namespace created.\n"
 
+# ============================================================================
+# Install ArgoCD
+# ============================================================================
 print_status "Installing ArgoCD..."
 
 kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
@@ -60,25 +63,45 @@ print_warning "This may take a few minutes..."
 # Wait for all ArgoCD pods to be ready
 kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
 
-print_status "All ArgoCD pods are ready!"
+print_status "All ArgoCD pods are ready!\n"
+
 
 # ============================================================================
-# Allow HTTP connection
+# Update /etc/hosts with the hostname
 # ============================================================================
-print_status "Configuring ArgoCD server access..."
+print_status "Ensuring $ARGOCD_HOSTNAME points to 127.0.0.1 in /etc/hosts..."
 
-# Patch the service to allow insecure access (for local development)
+# Check if entry already exists
+if grep -q "^127.0.0.1[[:space:]]*$ARGOCD_HOSTNAME" /etc/hosts; then
+    print_status "Hostname already present in /etc/hosts."
+else
+    print_warning "Need to add '$ARGOCD_HOSTNAME' to /etc/hosts (requires sudo)."
+    if command -v sudo &> /dev/null; then
+        sudo sh -c "echo '127.0.0.1 $ARGOCD_HOSTNAME' >> /etc/hosts"
+        print_status "Added $ARGOCD_HOSTNAME to /etc/hosts."
+    else
+        print_error "sudo not available. Please manually add the following line to /etc/hosts:"
+        echo "127.0.0.1 $ARGOCD_HOSTNAME"
+    fi
+fi
+
+# ============================================================================
+# Allow HTTP connection (--insecure flag)
+# ============================================================================
+print_status "Configuring ArgoCD server to accept HTTP (--insecure)..."
+
 kubectl patch deployment argocd-server -n argocd --type='json' \
-  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--insecure"},
-	{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--basehref"},
-	{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "/argocd"},
-	{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--rootpath"},
-	{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "/argocd"}]'
+  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--insecure"}]'
 
 # Wait for the patched deployment to roll out
 kubectl rollout status deployment/argocd-server -n argocd
 
-print_status "ArgoCD server configured."
+print_status "ArgoCD server configured for HTTP.\n"
+
+
+# ============================================================================
+# Create Ingress YAML file and apply
+# ============================================================================
 
 print_status "Setting up the ingress"
 kubectl apply -f "./confs/argocd/ingress.yaml"
@@ -98,16 +121,17 @@ ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o js
 # Display Access Information
 # ============================================================================
 print_status "ArgoCD is ready!"
+
 echo ""
 echo "======================================"
 echo "ArgoCD Access Information"
 echo "======================================"
-echo "URL: http://localhost:8080"
+echo "URL: http://$ARGOCD_HOSTNAME:8080"
 echo "Username: admin"
 echo "Password: $ARGOCD_PASSWORD"
 echo ""
 echo "To access ArgoCD UI:"
-echo "  1. Open browser: http://localhost:8080"
+echo "  1. Open browser: http://$ARGOCD_HOSTNAME:8080"
 echo "  2. Login with credentials above"
 echo "  3. Accept the self-signed certificate warning (if any)"
 echo ""

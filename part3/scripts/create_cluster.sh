@@ -28,17 +28,14 @@ if ! command -v docker &> /dev/null; then
     print_error "Docker is not installed. Run install.sh first."
     exit 1
 fi
-
 if ! command -v kubectl &> /dev/null; then
     print_error "kubectl is not installed. Run install.sh first."
     exit 1
 fi
-
 if ! command -v k3d &> /dev/null; then
     print_error "k3d is not installed. Run install.sh first."
     exit 1
 fi
-
 # Check if Docker daemon is running
 if ! docker ps &> /dev/null; then
     print_error "Docker daemon is not running. Start it with: sudo systemctl start docker"
@@ -68,7 +65,7 @@ print_status "Creating K3d cluster: $CLUSTER_NAME"
 # Create cluster with:
 # - 1 server node (control plane)
 # - 2 agent nodes (workers)
-# - Port 8080 on host -> port 80 in cluster (for ArgoCD UI via Ingress)
+# - Port 8080 on host -> port 80 in cluster (for ArgoCD and Gitlab UI via Ingress)
 # - Port 8888 on host -> port 8888 in cluster (for your application)
 # - Port 8443 on host -> port 443 in cluster (for HTTPS)
 
@@ -105,7 +102,7 @@ echo "Nodes:"
 kubectl get nodes
 echo ""
 echo "Exposed ports:"
-echo "  - 8080 -> 80 (HTTP/ArgoCD)"
+echo "  - 8080 -> 80 (HTTP/ArgoCD and Gitlab)"
 echo "  - 8888 -> 8888 (Application)"
 echo "  - 8443 -> 443 (HTTPS)"
 echo ""
