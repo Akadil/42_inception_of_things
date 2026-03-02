@@ -22,3 +22,7 @@ helm upgrade --install gitlab gitlab/gitlab -n gitlab -f https://gitlab.com/gitl
 #
 kubectl port-forward -n gitlab svc/gitlab-webservice-default 8181:8080
 
+# password:
+kubectl get secret gitlab-gitlab-initial-root-password -n gitlab -o jsonpath="{.data.password}" | base64 --decode
+
+# By the end, I have to say akk required data to login and create the repository
