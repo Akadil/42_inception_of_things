@@ -73,7 +73,6 @@ k3d cluster create $CLUSTER_NAME \
     --servers 1 \
     --agents 1 \
     --port 8080:80@loadbalancer \
-    --port 8888:8888@loadbalancer \
     --port 8443:443@loadbalancer \
     --wait
 
@@ -103,7 +102,7 @@ kubectl get nodes
 echo ""
 echo "Exposed ports:"
 echo "  - 8080 -> 80 (HTTP/ArgoCD and Gitlab)"
-echo "  - 8888 -> 8888 (Application)"
+# echo "  - 8888 -> 8888 (Application)"
 echo "  - 8443 -> 443 (HTTPS)"
 echo ""
 

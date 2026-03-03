@@ -5,6 +5,7 @@ GITHUB_REPO="https://github.com/Akadil/iot-akalimol.git"
 MANIFEST_PATH="manifestations"      # Folder in your repo with K8s manifests
 APP_NAME="my_application"           # Application name
 NAMESPACE="dev"                     # Namespace to deploy app
+SERVICE_NAME="wil-service"
 
 echo "======================================"
 echo "Part 3: Deploy Application via ArgoCD"
@@ -80,6 +81,39 @@ echo ""
 print_status "Checking pods in $NAMESPACE namespace..."
 kubectl get pods -n $NAMESPACE
 
+
+# ============================================================================
+# Setup port forwarding
+# ============================================================================
+print_status "Setting up port forwarding to access application on localhost:8888..."
+
+# Wait for the service to exist
+TIMEOUT=60
+while ! kubectl get service $SERVICE_NAME -n $NAMESPACE &> /dev/null; do
+    sleep 2
+    TIMEOUT=$((TIMEOUT-2))
+    if [ $TIMEOUT -le 0 ]; then
+        print_warning "Service $SERVICE_NAME not found after waiting. Port forwarding skipped."
+        break
+    fi
+done
+
+if kubectl get service $SERVICE_NAME -n $NAMESPACE &> /dev/null; then
+    # Start port-forward in background
+    kubectl port-forward -n $NAMESPACE service/$SERVICE_NAME 8888:8888 &
+    PF_PID=$!
+    print_status "Port forwarding started (PID: $PF_PID)."
+    print_warning "To stop port forwarding, run: kill $PF_PID"
+    # Give it a moment to establish
+    sleep 3
+else
+    print_warning "Service $SERVICE_NAME not found. Please check your application manifests."
+fi
+
+
+# ============================================================================
+# Final instructions
+# ============================================================================
 echo ""
 print_status "Application deployment initiated!"
 echo ""
@@ -88,7 +122,7 @@ echo "Next Steps"
 echo "======================================"
 echo ""
 echo "1. Check ArgoCD UI:"
-echo "   http://localhost:8080"
+echo "   http://argocd.local:8080"
 echo ""
 echo "2. Monitor application sync:"
 echo "   kubectl get application $APP_NAME -n argocd -w"
@@ -100,7 +134,11 @@ echo "4. View logs:"
 echo "   kubectl logs -n $NAMESPACE -l app=$APP_NAME"
 echo ""
 echo "5. Test your application:"
-echo "   curl http://localhost:8888"
+if [ -n "$PF_PID" ]; then
+    echo "   curl http://localhost:8888   (port‑forward active)"
+else
+    echo "   curl http://localhost:8888   (if you started port‑forward manually)"
+fi
 echo ""
 echo "6. To update the app (change image version):"
 echo "   - Edit deployment.yaml in your Git repo"
