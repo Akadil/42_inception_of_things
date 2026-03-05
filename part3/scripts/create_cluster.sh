@@ -73,6 +73,7 @@ k3d cluster create $CLUSTER_NAME \
     --servers 1 \
     --agents 1 \
     --port 8080:80@loadbalancer \
+    --port 80:80@loadbalancer \
     --port 8443:443@loadbalancer \
     --wait
 
