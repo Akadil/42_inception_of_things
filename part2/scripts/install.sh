@@ -30,3 +30,4 @@ kubectl get nodes
 echo "K3s server is up and running."
 
 # Deploy all applications
+kubectl apply -f /vagrant/confs/ingress.yaml
